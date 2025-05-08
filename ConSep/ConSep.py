@@ -1,13 +1,13 @@
 import os
 import scipy.io
-import h5py
+import sys
 from PIL import Image
-import matplotlib.pyplot as plt
 
 import torch
 import torchvision
 import numpy as np
 
+sys.path.append('../Steerable/')
 from Steerable.datasets.hdf5 import HDF5Dataset
 
 
