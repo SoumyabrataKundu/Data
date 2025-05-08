@@ -40,13 +40,14 @@ class Decathlon(torch.utils.data.Dataset):
         return self.n_samples
     
     
-def main(data_path, task):
+def main(task):
     filename = task + '.hdf5'
     hdf5file = HDF5Dataset(filename)
-    
-    for mode in ['train']:
-        dataset = Decathlon(data_path=os.path.join(data_path, task))
-        hdf5file.create_hdf5_dataset(mode, dataset)
+    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(Decathlon(data_path= f'{task}/data/'), [0.7, 0.1, 0.2])
+    datasets = {'train' : train_dataset, 'val' : val_dataset, 'test' : test_dataset}
+ 
+    for mode in datasets:
+        hdf5file.create_hdf5_dataset(mode, datasets[mode], variable_length=True)
     
     
 if __name__== '__main__':
@@ -54,7 +55,6 @@ if __name__== '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, required=True)
     parser.add_argument("--task", type=str, required=True)
 
     args = parser.parse_args()
