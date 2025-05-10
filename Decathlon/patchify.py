@@ -13,17 +13,16 @@ class image_reshape:
 class target_reshape:
     def __call__(self, image):
         return image.reshape(512,512,-1)
+    
 
-def get_datasets(task) -> dict:
+def main():
+    task = 'Pancreas'
     train_dataset = HDF5(h5py.File(f'{task}/data/{task}.hdf5', 'r'), mode='train', image_transform=image_reshape(), target_transform=target_reshape())
     val_dataset = HDF5(h5py.File(f'{task}/data/{task}.hdf5', 'r'), mode='val', image_transform=image_reshape(), target_transform=target_reshape())
     test_dataset = HDF5(h5py.File(f'{task}/data/{task}.hdf5', 'r'), mode='test', image_transform=image_reshape(), target_transform=target_reshape())
 
-    return {'train' : train_dataset, 'val' : val_dataset, 'test' : test_dataset}
+    datasets = {'train' : train_dataset, 'val' : val_dataset, 'test' : test_dataset}
 
-def main():
-    task = 'Pancreas'
-    datasets = get_datasets(task) 
     hdf5file = HDF5Dataset(f'{task}_patched.hdf5')
 
     for mode in datasets:

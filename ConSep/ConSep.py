@@ -29,7 +29,7 @@ class MATToTensor:
         return class_labels[instance_map].long()
 
 
-class ConSep(torch.utils.data.Dataset):
+class ConSepPatched(torch.utils.data.Dataset):
     def __init__(self, data_path, mode='train', image_transform=PNGToTensor(), target_transform=MATToTensor()):
         self.data_path = data_path
         self.mode = mode
@@ -58,7 +58,7 @@ class ConSep(torch.utils.data.Dataset):
         return len(self.image_files)
 
 
-class ConSepReconstruct(torch.utils.data.Dataset):
+class ConSep(torch.utils.data.Dataset):
     def __init__(self, data_path, mode='train', image_transform=PNGToTensor(), target_transform=MATToTensor()):
         self.data_path = data_path
         self.mode = mode
@@ -105,10 +105,9 @@ class ConSepReconstruct(torch.utils.data.Dataset):
 
         
 def main(data_path):
-    datasets = {'train' : ConSep(data_path, 'train'), 'test' : ConSep(data_path, 'test')}
     hdf5file = HDF5Dataset('ConSep_patched.hdf5')
-    for mode in datasets:
-        hdf5file.create_hdf5_dataset(mode, datasets[mode])
+    for mode in ['train', 'test']:
+        hdf5file.create_hdf5_dataset(mode, ConSepPatched(data_path, mode))
 
     return
     
