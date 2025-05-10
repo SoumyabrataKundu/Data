@@ -20,33 +20,6 @@ class RandomRotation:
         
         return image, target
 
-def get_datasets(data_path, rotate=False) -> dict:
-    
-        
-    kwargs = {
-        'image_shape' : (1,56,56),
-        'min_num_per_image' : 2,
-        'max_num_per_image' : 4,
-        'max_iou' : 0.2,
-        'transforms' : RandomRotation() if rotate else None
-    }
-    
-    transformation = torchvision.transforms.Compose([
-    torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize(0,1)])
-
-    train_dataset = torchvision.datasets.MNIST(data_path, train=True, transform=transformation)
-    test_dataset = torchvision.datasets.MNIST(data_path, train=False, transform=transformation)
-    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [55000, 5000])
-    
-    
-    
-    train_dataset = SegmentationDataset(train_dataset, n_samples=10000, **kwargs)
-    val_dataset = SegmentationDataset(val_dataset, n_samples=2000, **kwargs)
-    test_dataset = SegmentationDataset(test_dataset, n_samples=50000, **kwargs)
-    
-    return {'train' : train_dataset, 'val' : val_dataset, 'test' : test_dataset}
-
 
 #####################################################################################################
 ######################################## Main Function ##############################################
@@ -54,7 +27,24 @@ def get_datasets(data_path, rotate=False) -> dict:
 
 
 def main(data_path, rotate):
-    datasets = get_datasets(data_path, rotate=rotate)
+    kwargs = {
+        'image_shape' : (1,56,56),
+        'min_num_per_image' : 2,
+        'max_num_per_image' : 4,
+        'max_iou' : 0.2,
+        'transforms' : RandomRotation() if rotate else None
+    }
+
+    train_dataset = torchvision.datasets.MNIST(data_path, train=True, transform=torchvision.transforms.ToTensor())
+    test_dataset = torchvision.datasets.MNIST(data_path, train=False, transform=torchvision.transforms.ToTensor())
+    train_dataset, val_dataset = torch.utils.data.random_split(train_dataset, [55000, 5000])
+    
+    train_dataset = SegmentationDataset(train_dataset, n_samples=10000, **kwargs)
+    val_dataset = SegmentationDataset(val_dataset, n_samples=2000, **kwargs)
+    test_dataset = SegmentationDataset(test_dataset, n_samples=50000, **kwargs)
+    
+    datasets = {'train' : train_dataset, 'val' : val_dataset, 'test' : test_dataset}
+
     hdf5file = HDF5Dataset('MNIST_segment.hdf5')
     for mode in datasets:
         if datasets[mode] is not None:
@@ -66,7 +56,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, required=True)
+    parser.add_argument("--data_path", type=str, default='./data/')
     parser.add_argument("--rotate", type=bool, default=False)
 
     args = parser.parse_args()

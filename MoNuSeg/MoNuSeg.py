@@ -1,71 +1,20 @@
 import torch
 from torchvision import transforms
 import os
-import matplotlib.pyplot as plt
 import tifffile as tiff
 import xml.etree.ElementTree as ET
 import numpy as np
 from PIL import Image, ImageDraw
-import h5py
+import sys
+
+sys.path.append('../../Steerable/')
+from Steerable.datasets.hdf5 import HDF5Dataset
+from Steerable.datasets.download import download_and_unzip
 
 
 #####################################################################################################
-#################################### Create dataset #################################################
+##################################### MoNuSeg Dataset ###############################################
 ##################################################################################################### 
-
-def create_monuseg_dataset(datasets, name):
-    file = h5py.File(name, 'a')
-    for mode in datasets:
-        print(f"Mode : {mode} ...")
-        dataset = datasets[mode]
-        
-        if datasets[mode] is not None:
-            for index in range(len(dataset)):
-                image, target = dataset[index]
-                write_into_hdf5_file(file, mode, image, target)
-                print(f"{index+1} / {len(dataset)}", end="\r")
-        print('Done')
-    file.close()
-
-
-#####################################################################################################
-#################################### Write into hdf5 File ###########################################
-##################################################################################################### 
-
-def create_hdf5_file(image_shape: tuple, 
-                     target_shape: tuple,
-                     name : str
-                     ) -> None:
-
-    with h5py.File(name, 'w') as f:
-        for mode in ['train', 'test', 'val']:    
-            f.create_dataset(mode + '_images', (0, ) + image_shape, maxshape=(None,) +  image_shape, chunks=True)
-            f.create_dataset(mode + '_targets', (0,) + target_shape, maxshape=(None,) +  target_shape, chunks=True)
-            
-            
-def write_into_hdf5_file(file,
-                        mode : str,
-                        image,
-                        target, 
-                        ) -> None:
-
-    
-    image_shape = tuple(image.size())
-    target_shape = tuple(target.size())
-
-    images = file[mode + '_images']
-    targets = file[mode + '_targets']
-    
-
-    images.resize((len(images) + 1,) + image_shape)
-    targets.resize((len(targets) + 1,) + target_shape)
-    
-    images[-1] = image
-    targets[-1] = target
-    
-    return 
-
-
 
 class AnnotationsToTensor:
     def __init__(self, target_shape):
@@ -104,9 +53,7 @@ class AnnotationsToTensor:
         
         return np.array(mask)
     
-#####################################################################################################
-##################################### MoNuSeg Dataset ###############################################
-##################################################################################################### 
+
 
 class MoNuSeg(torch.utils.data.Dataset):
     def __init__(self, data_path, mode='train', image_transform = None, target_transform = None) -> None:
@@ -114,7 +61,7 @@ class MoNuSeg(torch.utils.data.Dataset):
         self.image_transform = image_transform
         self.target_transform = target_transform
         
-        self.data_path = data_path + '/PH2 Dataset images'
+        self.data_path = data_path
         image_paths = os.path.join(data_path, f'MoNuSeg{mode.capitalize()}Data', 'Tissue Images')
         target_paths = os.path.join(data_path, f'MoNuSeg{mode.capitalize()}Data', 'Annotations')
         
@@ -137,8 +84,17 @@ class MoNuSeg(torch.utils.data.Dataset):
 
     def __len__(self):
         return self.n_samples
+   
+#####################################################################################################
+######################################## Main Function ##############################################
+##################################################################################################### 
 
-def get_dataset(data_path) -> dict:
+URL = None
+def main(data_path):
+    if data_path is None:
+        download_and_unzip(URL, 'MoNuSeg')
+        data_path = 'MoNuSeg/MoNuSeg/'
+
     image_shape = (1000, 1000)
     image_transform = transforms.ToTensor()
     target_transform = AnnotationsToTensor(image_shape)
@@ -146,51 +102,20 @@ def get_dataset(data_path) -> dict:
     train_dataset = MoNuSeg(data_path, 'train', image_transform=image_transform, target_transform=target_transform)
     test_dataset = MoNuSeg(data_path, 'test', image_transform=image_transform, target_transform=target_transform)
     
-    return {'train' : train_dataset, 'val': None, 'test' : test_dataset}
+    datasets =  {'train' : train_dataset, 'val': None, 'test' : test_dataset}
 
+    hdf5file = HDF5Dataset('MoNuSeg.hdf5')
+    for mode in datasets:
+        hdf5file.create_hdf5_dataset(mode, datasets[mode])
 
-#####################################################################################################
-######################################## Main Function ##############################################
-##################################################################################################### 
-
-def main():
-    data_path = "./MoNuSeg/"
-    name = os.path.join(data_path, "MoNuSeg.hdf5")
-    target_shape = (1000, 1000)
-    image_shape = (3,) + target_shape
-    datasets = get_dataset(data_path)
-    
-    #if not os.path.isfile(name):
-    create_hdf5_file(image_shape, target_shape, name)
-    create_monuseg_dataset(datasets, name)
-    
     return
+    
+if __name__== '__main__':
 
+    import argparse
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_path", type=str, default='./data/')
+    args = parser.parse_args()
 
-#####################################################################################################
-######################################### View Dataset ##############################################
-##################################################################################################### 
-
-
-def view_dataset(file_name):
-    modes = ['train', 'val', 'test']
-    with h5py.File(file_name, mode='r') as f:
-        for mode in modes:
-            
-            image_data = f[mode+'_images']
-            target_data = f[mode+'_targets']
-            assert len(image_data) == len(target_data)
-            
-            if not len(image_data) == 0:
-            
-                print(f'Shape of image in {mode} dataset : {image_data.shape}')
-                print(f'Shape of target in {mode} dataset : {target_data.shape}')
-                
-                fig, ax = plt.subplots(1,2)
-                fig.set_size_inches(10,5)
-                index = torch.randint(0, len(target_data), (1,)).item()
-                ax[0].imshow(torch.from_numpy(image_data[index]).permute(1,2,0))
-                ax[1].imshow(target_data[index])
-            
-                plt.show()
+    main(**args.__dict__)
