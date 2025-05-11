@@ -6,7 +6,7 @@ from torchvision.transforms.functional import rotate
 import sys
 
 sys.path.append('../../Steerable/')
-from Steerable.datasets.hdf5 import HDF5Dataset
+import Steerable.utils
 
     
     
@@ -71,7 +71,7 @@ def main(data_path):
     test_dataset = Pascal(data_path, mode='test', rotate=True, image_transform=transformation, target_transform=transformation)
     
     datasets =  {'train' : train_dataset, 'test' : test_dataset}
-    hdf5file = HDF5Dataset('Pascal.hdf5')
+    hdf5file = Steerable.utils.HDF5Dataset('Pascal.hdf5')
     
     for mode in datasets:
         hdf5file.create_hdf5_dataset(mode, datasets[mode])

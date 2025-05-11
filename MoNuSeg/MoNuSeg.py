@@ -8,9 +8,7 @@ from PIL import Image, ImageDraw
 import sys
 
 sys.path.append('../../Steerable/')
-from Steerable.datasets.hdf5 import HDF5Dataset
-from Steerable.datasets.download import download_and_unzip
-
+import Steerable.utils
 
 #####################################################################################################
 ##################################### MoNuSeg Dataset ###############################################
@@ -89,10 +87,10 @@ class MoNuSeg(torch.utils.data.Dataset):
 ######################################## Main Function ##############################################
 ##################################################################################################### 
 
-URL = None
+URL = 'https://drive.usercontent.google.com/download?id=1ZgqFJomqQGNnsx7w7QBzQQMVA16lbVCA&export=download&authuser=0'
 def main(data_path):
     if data_path is None:
-        download_and_unzip(URL, 'MoNuSeg')
+        Steerable.utils.download_and_unzip(URL, 'MoNuSeg')
         data_path = 'MoNuSeg/MoNuSeg/'
 
     image_shape = (1000, 1000)
@@ -104,7 +102,7 @@ def main(data_path):
     
     datasets =  {'train' : train_dataset, 'val': None, 'test' : test_dataset}
 
-    hdf5file = HDF5Dataset('MoNuSeg.hdf5')
+    hdf5file = Steerable.utils.HDF5Dataset('MoNuSeg.hdf5')
     for mode in datasets:
         hdf5file.create_hdf5_dataset(mode, datasets[mode])
 

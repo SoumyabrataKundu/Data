@@ -6,7 +6,7 @@ import fnmatch
 import sys
 
 sys.path.append('../../Steerable/')
-from Steerable.datasets.hdf5 import HDF5Dataset
+import Steerable.utils
 
 # Dataset Generation
 class ModelNet10(torch.utils.data.Dataset):
@@ -97,7 +97,7 @@ class ModelNet10(torch.utils.data.Dataset):
 
 def main(data_path, size, rotate, rotate_z, jitter):
     filename = 'ModelNet10_' + ('rotate' if rotate else ('rotate_z' if rotate_z else '')) + ('jitter' if jitter else '') + str(size) + '.hdf5'
-    hdf5file = HDF5Dataset(filename)
+    hdf5file = Steerable.utils.HDF5Dataset(filename)
 
     for mode in ['train', 'test']:
         dataset = ModelNet10(data_path=data_path, mode = mode, size=size, rotate=rotate, rotate_z=rotate_z, jitter=jitter)

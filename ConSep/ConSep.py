@@ -111,10 +111,9 @@ class ConSep(torch.utils.data.Dataset):
 
         
 def main(data_path):
-    datasets = {'train' : ConSep(data_path, 'train'), 'test' : ConSep(data_path, 'test')}
     hdf5file = HDF5Dataset('ConSep.hdf5')
-    for mode in datasets:
-        hdf5file.create_hdf5_dataset(mode, datasets[mode])
+    for mode in ['train', 'test']:
+        hdf5file.create_hdf5_dataset(mode, ConSep(data_path, mode))
 
     return
     
