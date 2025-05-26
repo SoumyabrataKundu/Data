@@ -1,19 +1,13 @@
 import torch
 import h5py
 import sys
+
 sys.path.append('../../Steerable')
-
-from Steerable.datasets.hdf5 import HDF5, HDF5Dataset 
-from Steerable.Segmentation.Patchify import PatchifyDataset
-
-def get_datasets() -> dict:
-    train_dataset = HDF5(h5py.File('data/PH2.hdf5', 'r'), mode='train')
-    test_dataset = HDF5(h5py.File('data/PH2.hdf5', 'r'), mode='test')
-
-    return {'train' : train_dataset, 'val': None, 'test' : test_dataset}
+from Steerable.utils import HDF5, HDF5Dataset, PatchifyDataset 
 
 def main():
-    datasets = get_datasets()
+    data_file = h5py.File('data/PH2.hdf5', 'r')
+    datasets = {'train' : HDF5(data_file, mode='train'), 'val': HDF5(data_file, mode='val'), 'test' : HDF5(data_file, mode='test')}
     hdf5file = HDF5Dataset('PH2_patched256_256.hdf5')
     for mode in datasets:
         if datasets[mode] is not None:
