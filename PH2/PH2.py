@@ -70,9 +70,9 @@ def main(data_path):
             transforms.ToTensor(),
             ])
     dataset = PH2(data_path, image_transform=transformation, target_transform=transformation)
-    train_dataset, test_dataset = torch.utils.data.random_split(dataset, [0.75, 0.25])
+    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(dataset, [0.7, 0.1, 0.2])
     
-    datasets = {'train' : train_dataset, 'test' : test_dataset}
+    datasets = {'train' : train_dataset, 'val' : val_dataset 'test' : test_dataset}
     hdf5file = HDF5Dataset('PH2.hdf5')
     for mode in datasets:
         hdf5file.create_hdf5_dataset(mode, datasets[mode])
